@@ -12,16 +12,7 @@ namespace College_Repository.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new StudentConfiguration());
-            // modelBuilder.Entity<Student>
-            // (entity =>
-            // {
-            //     entity.Property(n => n.Name).IsRequired();
-            //     entity.Property(n => n.Name).HasMaxLength(250);
-            //     entity.Property(n => n.Email).IsRequired().HasMaxLength(250);
-            //     entity.Property(n => n.Phone).IsRequired(false).HasMaxLength(12);
-            //     entity.Property(n => n.AdmissionDate).IsRequired();
-            //     entity.Property(n => n.DateofBirth).IsRequired();
-            // });
+            
         }
     }
 
