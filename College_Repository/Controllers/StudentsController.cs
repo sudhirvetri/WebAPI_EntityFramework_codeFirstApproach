@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using College_Repository.Data;
 using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace College_Repository.Controllers
@@ -18,71 +19,83 @@ namespace College_Repository.Controllers
 
         [HttpPost]
         [Route("AddStudent")]
-        public ActionResult<List<Student>> AddStudent(Student obj)
+        public async Task<ActionResult<List<Student>>> AddStudent(Student obj)
         {
-            _context.Student.Add(obj);
-            _context.SaveChanges();
-            return Ok(_context.Student.ToList());
+            await _context.Student.AddAsync(obj);
+            await _context.SaveChangesAsync();
+            return Ok(await _context.Student.ToListAsync());
         }
 
         [HttpGet]
-        public ActionResult<List<Student>> GetStudent()
+        public async Task<ActionResult<List<Student>>> GetStudent()
         {
-            return Ok(_context.Student.ToList());
+            return Ok(await _context.Student.ToListAsync());
         }
 
         [HttpGet("{id:int}")]
         //[Route("GetStudentbyID")]
-        public ActionResult<List<Student>> SearchStudentOnID(int id)
+        public async Task<ActionResult<List<Student>>> SearchStudentOnID(int id)
         {
-            return Ok(_context.Student.Where(data => data.Id == id).ToList());
+            return Ok(await _context.Student.Where(data => data.Id == id).ToListAsync());
         }
 
         [HttpDelete]
         [Route("DeleteStudentbyID")]
-        public ActionResult DeleteStudent(int id)
+        public async Task<ActionResult> DeleteStudent(int id)
         {
             if (id <= 0)
             {
                 return BadRequest();
             }
-            var result = _context.Student.Where(x => x.Id == id).FirstOrDefault();
+            var result = await _context.Student.FindAsync(id);
             if (result == null)
             {
                 return NotFound();
             }
             _context.Student.Remove(result);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok();
         }
 
         [HttpPut]
         [Route("UpdateStudent")]
-        public ActionResult PutStudent(Student obj)
+        public async Task<ActionResult> PutStudent(Student obj)
         {
             if (obj == null || obj.Id <= 0)
             {
                 return BadRequest();
             }
-            var existingStudent = _context.Student.Where(x => x.Id == obj.Id).FirstOrDefault();
+            var existingStudent = await _context.Student.AsNoTracking().Where(x => x.Id == obj.Id).FirstOrDefaultAsync();
             if (existingStudent == null)
             {
                 return NotFound("The student with given ID is not present in repository");
             }
-            existingStudent.Name = obj.Name;
-            existingStudent.Phone = obj.Phone;
-            existingStudent.Email = obj.Email;
-            existingStudent.AdmissionDate = obj.AdmissionDate;
-            existingStudent.DateofBirth = obj.DateofBirth;
-            existingStudent.Status = obj.Status;
-            _context.Student.Update(existingStudent);
-            _context.SaveChanges();
+
+            var newrecord = new Student()
+            {
+                Id = existingStudent.Id,
+                Name = obj.Name,
+                Email = obj.Email,
+                AdmissionDate = obj.AdmissionDate,
+                DateofBirth = obj.DateofBirth,
+                Phone = obj.Phone,
+                Status = obj.Status
+            };
+
+            // existingStudent.Name = obj.Name;
+            // existingStudent.Phone = obj.Phone;
+            // existingStudent.Email = obj.Email;
+            // existingStudent.AdmissionDate = obj.AdmissionDate;
+            // existingStudent.DateofBirth = obj.DateofBirth;
+            // existingStudent.Status = obj.Status;
+            _context.Student.Update(newrecord);
+            await _context.SaveChangesAsync();
 
             return Ok();
         }
 
         [HttpPatch("{id:int}")]
-        public ActionResult PatchStudent(int id, [FromBody] JsonPatchDocument<StudentDTO> patchDoc)
+        public async Task<ActionResult> PatchStudent(int id, [FromBody] JsonPatchDocument<StudentDTO> patchDoc)
         {
             if (id <= 0)
             {
@@ -94,7 +107,7 @@ namespace College_Repository.Controllers
                 return BadRequest();
             }
 
-            var existingStudent = _context.Student.Where(data => data.Id == id).FirstOrDefault();
+            var existingStudent = await _context.Student.Where(data => data.Id == id).FirstOrDefaultAsync();
             if (existingStudent == null)
             {
                 return NotFound("Student not found");
@@ -123,7 +136,7 @@ namespace College_Repository.Controllers
             existingStudent.DateofBirth = studentToPatch.DateofBirth;
             existingStudent.Status = studentToPatch.Status;
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 
