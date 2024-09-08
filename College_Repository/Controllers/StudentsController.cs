@@ -29,7 +29,10 @@ namespace College_Repository.Controllers
         [HttpGet]
         public async Task<ActionResult<List<Student>>> GetStudent()
         {
-            return Ok(await _context.Student.ToListAsync());
+            var studentresult = await _context.Student.ToListAsync();
+            var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
+            return Ok(studentDTOResult);
+
         }
 
         [HttpGet("{id:int}")]
