@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using College_Repository.Data;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 
 namespace College_Repository.Controllers
@@ -12,9 +13,11 @@ namespace College_Repository.Controllers
     public class StudentsController : ControllerBase
     {
         private readonly SQLITEContext _context;
-        public StudentsController(SQLITEContext context)
+        private readonly IMapper _mapper;
+        public StudentsController(SQLITEContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         [HttpPost]
@@ -24,7 +27,8 @@ namespace College_Repository.Controllers
             await _context.Student.AddAsync(obj);
             await _context.SaveChangesAsync();
             var studentresult = await _context.Student.ToListAsync();
-            var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
+            //var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
+            var studentDTOResult = _mapper.Map<List<StudentDTO>>(studentresult);
             return Ok(studentDTOResult);
         }
 
@@ -32,7 +36,8 @@ namespace College_Repository.Controllers
         public async Task<ActionResult<List<Student>>> GetStudent()
         {
             var studentresult = await _context.Student.ToListAsync();
-            var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
+            //var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
+            var studentDTOResult = _mapper.Map<List<StudentDTO>>(studentresult);
             return Ok(studentDTOResult);
 
         }
@@ -42,7 +47,8 @@ namespace College_Repository.Controllers
         public async Task<ActionResult<List<Student>>> SearchStudentOnID(int id)
         {
             var studentresult = await _context.Student.Where(data => data.Id == id).ToListAsync();
-            var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
+            //var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
+            var studentDTOResult = _mapper.Map<List<StudentDTO>>(studentresult);
             return Ok(studentDTOResult);
         }
 
