@@ -23,7 +23,9 @@ namespace College_Repository.Controllers
         {
             await _context.Student.AddAsync(obj);
             await _context.SaveChangesAsync();
-            return Ok(await _context.Student.ToListAsync());
+            var studentresult = await _context.Student.ToListAsync();
+            var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
+            return Ok(studentDTOResult);
         }
 
         [HttpGet]
@@ -39,7 +41,9 @@ namespace College_Repository.Controllers
         //[Route("GetStudentbyID")]
         public async Task<ActionResult<List<Student>>> SearchStudentOnID(int id)
         {
-            return Ok(await _context.Student.Where(data => data.Id == id).ToListAsync());
+            var studentresult = await _context.Student.Where(data => data.Id == id).ToListAsync();
+            var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
+            return Ok(studentDTOResult);
         }
 
         [HttpDelete]
