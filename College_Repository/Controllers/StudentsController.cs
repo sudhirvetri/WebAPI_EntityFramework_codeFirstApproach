@@ -128,7 +128,7 @@ namespace College_Repository.Controllers
             var studentToPatch = new StudentDTO
             {
 
-                Name = existingStudent.Name,
+                StudentName = existingStudent.Name,
                 Phone = existingStudent.Phone,
                 Email = existingStudent.Email,
                 AdmissionDate = existingStudent.AdmissionDate,
@@ -142,7 +142,7 @@ namespace College_Repository.Controllers
                 return BadRequest(ModelState);
             }
 
-            existingStudent.Name = studentToPatch.Name;
+            existingStudent.Name = studentToPatch.StudentName;
             existingStudent.Phone = studentToPatch.Phone;
             existingStudent.Email = studentToPatch.Email;
             existingStudent.AdmissionDate = studentToPatch.AdmissionDate;

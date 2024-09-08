@@ -7,7 +7,7 @@ public static class StudentMapper
         return new StudentDTO
         {
             Id = obj.Id,
-            Name = obj.Name,
+            StudentName = obj.Name,
             AdmissionDate = obj.AdmissionDate,
             DateofBirth = obj.DateofBirth,
             Email = obj.Email,
