@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using College_Repository.Data;
+using College_Repository.Data.repository;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
@@ -12,22 +13,26 @@ namespace College_Repository.Controllers
     [ApiController]
     public class StudentsController : ControllerBase
     {
-        private readonly SQLITEContext _context;
+        //private readonly SQLITEContext _context;
         private readonly IMapper _mapper;
-        public StudentsController(SQLITEContext context, IMapper mapper)
+        private readonly IStudentRepository _studentRepository;
+        public StudentsController(SQLITEContext context, IMapper mapper, IStudentRepository studentRepository)
         {
-            _context = context;
+            //_context = context;
             _mapper = mapper;
+            _studentRepository = studentRepository;
         }
 
         [HttpPost]
         [Route("AddStudent")]
         public async Task<ActionResult<List<Student>>> AddStudent(Student obj)
         {
-            await _context.Student.AddAsync(obj);
-            await _context.SaveChangesAsync();
-            var studentresult = await _context.Student.ToListAsync();
+            // await _context.Student.AddAsync(obj);
+            // await _context.SaveChangesAsync();
+            // var studentresult = await _context.Student.ToListAsync();
             //var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
+
+            var studentresult = await _studentRepository.CreateStudentAsync(obj);
             var studentDTOResult = _mapper.Map<List<StudentDTO>>(studentresult);
             return Ok(studentDTOResult);
         }
@@ -35,8 +40,9 @@ namespace College_Repository.Controllers
         [HttpGet]
         public async Task<ActionResult<List<Student>>> GetStudent()
         {
-            var studentresult = await _context.Student.ToListAsync();
+            //var studentresult = await _context.Student.ToListAsync();// to remove
             //var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
+            var studentresult = await _studentRepository.GetAllAsync();
             var studentDTOResult = _mapper.Map<List<StudentDTO>>(studentresult);
             return Ok(studentDTOResult);
 
@@ -44,11 +50,12 @@ namespace College_Repository.Controllers
 
         [HttpGet("{id:int}")]
         //[Route("GetStudentbyID")]
-        public async Task<ActionResult<List<Student>>> SearchStudentOnID(int id)
+        public async Task<ActionResult<StudentDTO>> SearchStudentOnID(int id)
         {
-            var studentresult = await _context.Student.Where(data => data.Id == id).ToListAsync();
+            //var studentresult = await _context.Student.Where(data => data.Id == id).ToListAsync();
             //var studentDTOResult = studentresult.Select(data => StudentMapper.Map(data)).ToList();
-            var studentDTOResult = _mapper.Map<List<StudentDTO>>(studentresult);
+            var studentresult = await _studentRepository.GetByStudentIdAsync(id);
+            var studentDTOResult = _mapper.Map<StudentDTO>(studentresult);
             return Ok(studentDTOResult);
         }
 
@@ -56,25 +63,49 @@ namespace College_Repository.Controllers
         [Route("DeleteStudentbyID")]
         public async Task<ActionResult> DeleteStudent(int id)
         {
-            if (id <= 0)
+            // if (id <= 0)
+            // {
+            //     return BadRequest();
+            // }
+            // var result = await _context.Student.FindAsync(id);
+            // if (result == null)
+            // {
+            //     return NotFound();
+            // }
+            // _context.Student.Remove(result);
+            // await _context.SaveChangesAsync();
+            // return Ok();
+            try
             {
-                return BadRequest();
+                bool result = await _studentRepository.DeleteStudentAsync(id);
+                if (result)
+                {
+                    return Ok("Student deleted successfully");
+                }
+                return NotFound("Student not found");
+
             }
-            var result = await _context.Student.FindAsync(id);
-            if (result == null)
+            catch (ArgumentException ex)
             {
-                return NotFound();
+                return BadRequest(ex.Message);
             }
-            _context.Student.Remove(result);
-            await _context.SaveChangesAsync();
-            return Ok();
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+
+
         }
 
         [HttpPut]
         [Route("UpdateStudent")]
-        public async Task<ActionResult> PutStudent(Student obj)
+        public async Task<ActionResult> PutStudent(StudentDTO obj)
         {
-            if (obj == null || obj.Id <= 0)
+            /*if (obj == null || obj.Id <= 0)
             {
                 return BadRequest();
             }
@@ -94,6 +125,7 @@ namespace College_Repository.Controllers
                 Phone = obj.Phone,
                 Status = obj.Status
             };
+            */
 
             // existingStudent.Name = obj.Name;
             // existingStudent.Phone = obj.Phone;
@@ -101,10 +133,12 @@ namespace College_Repository.Controllers
             // existingStudent.AdmissionDate = obj.AdmissionDate;
             // existingStudent.DateofBirth = obj.DateofBirth;
             // existingStudent.Status = obj.Status;
-            _context.Student.Update(newrecord);
-            await _context.SaveChangesAsync();
 
-            return Ok();
+            /*_context.Student.Update(newrecord);
+            await _context.SaveChangesAsync();*/
+            bool result = await _studentRepository.UpdateStudentAsync(obj);
+
+            return Ok(result);
         }
 
         [HttpPatch("{id:int}")]
@@ -120,21 +154,24 @@ namespace College_Repository.Controllers
                 return BadRequest();
             }
 
-            var existingStudent = await _context.Student.Where(data => data.Id == id).FirstOrDefaultAsync();
+            //var existingStudent = await _context.Student.Where(data => data.Id == id).FirstOrDefaultAsync();
+            var existingStudent = await _studentRepository.GetByStudentIdAsync(id);
+
             if (existingStudent == null)
             {
                 return NotFound("Student not found");
             }
-            var studentToPatch = new StudentDTO
-            {
+            // var studentToPatch = new StudentDTO
+            // {
 
-                StudentName = existingStudent.Name,
-                Phone = existingStudent.Phone,
-                Email = existingStudent.Email,
-                AdmissionDate = existingStudent.AdmissionDate,
-                DateofBirth = existingStudent.DateofBirth,
-                Status = existingStudent.Status
-            };
+            //     StudentName = existingStudent.Name,
+            //     Phone = existingStudent.Phone,
+            //     Email = existingStudent.Email,
+            //     AdmissionDate = existingStudent.AdmissionDate,
+            //     DateofBirth = existingStudent.DateofBirth,
+            //     Status = existingStudent.Status
+            // };
+            var studentToPatch = _mapper.Map<StudentDTO>(existingStudent);
             patchDoc.ApplyTo(studentToPatch, ModelState);
 
             if (!ModelState.IsValid)
@@ -142,14 +179,18 @@ namespace College_Repository.Controllers
                 return BadRequest(ModelState);
             }
 
-            existingStudent.Name = studentToPatch.StudentName;
-            existingStudent.Phone = studentToPatch.Phone;
-            existingStudent.Email = studentToPatch.Email;
-            existingStudent.AdmissionDate = studentToPatch.AdmissionDate;
-            existingStudent.DateofBirth = studentToPatch.DateofBirth;
-            existingStudent.Status = studentToPatch.Status;
+            //existingStudent.Name = studentToPatch.StudentName;
+            //existingStudent.Phone = studentToPatch.Phone;
+            //existingStudent.Email = studentToPatch.Email;
+            //existingStudent.AdmissionDate = studentToPatch.AdmissionDate;
+            //existingStudent.DateofBirth = studentToPatch.DateofBirth;
+            //existingStudent.Status = studentToPatch.Status;
 
-            await _context.SaveChangesAsync();
+
+            //_mapper.Map(studentToPatch, existingStudent);
+            //_context.Entry(existingStudent).State = EntityState.Modified; // Explicitly set the entity state to Modified
+            await _studentRepository.UpdateStudentAsync(studentToPatch);
+            //await _context.SaveChangesAsync();
             return NoContent();
         }
 

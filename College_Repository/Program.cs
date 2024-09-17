@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using College_Repository.Data;
+using College_Repository.Data.repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<SQLITEContext>(options =>
 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+builder.Services.AddTransient<IStudentRepository, StudentRepository>();
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 
